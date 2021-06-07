@@ -1,0 +1,72 @@
+.catBox {
+    background-color: rgb(84, 117, 135);
+    border-radius: 10px;
+    padding-top: 50px;
+    padding-left: 65px;
+    padding-bottom: 100px;
+}
+
+
+.cattributes {
+    width: 300px;
+    height: 500px;
+    padding: 25px;
+    background-color: #ededed;
+    border-radius: 10px;
+}
+
+.dnaDiv {
+    position: absolute;
+    left: 20px;
+    bottom: 5px;
+    /* original settings: 20, 5 */  
+
+}
+
+.buttonsBox {
+    background-color: #ededed;
+    padding: 12px;
+    border-radius: 10px;
+    margin: 10;
+}
+
+.buttonsBox2 {
+    background-color: #ededed;
+    width: 280px;
+    height: 80px;
+    padding: 12px;
+    border-radius: 10px;
+    margin: 10;
+    
+}
+
+.buttonsBox3 {
+    background-color: #ededed;
+  
+    padding: 12px;
+    border-radius: 10px;
+    margin: 10;
+    
+}
+
+.catButtons {
+    background-color: rgb(17, 115, 220);
+    border-radius: 4px;
+    border: 2px solid rgb(84, 117, 135);
+    width: 200px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 2px 5px #999;
+   
+}
+
+.catButtons:hover {background-color: #01498c}
+
+.catButtons:active {
+  background-color: #01498c;
+  box-shadow: 2px 3px #666;
+  transform: translateY(4px);
+}
