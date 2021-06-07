@@ -5,7 +5,8 @@ import "./IERC721.sol";
 import "./SafeMath.sol";
 import "./Ownable.sol";
 
- contract KittyContract is IERC721, Ownable {
+
+  contract KittyContract is IERC721,  Ownable {
 
   using SafeMath for uint256;
 
@@ -13,7 +14,7 @@ import "./Ownable.sol";
   mapping(address => uint256) ownershipTokenCount; // an address to a number, a count
   mapping(address => uint256[]) ownerToCats; //an address to a number of cats in an array
 
-  mapping(uint256 => address) private _tokenApprovals;
+  //mapping(uint256 => address) private _tokenApprovals;
 
   event Birth(address owner, uint256 kittenId, uint256 mumId, uint256 dadId, uint256 genes);
 
@@ -21,45 +22,37 @@ import "./Ownable.sol";
   // automatically, thus there would be no need to create getter functions
   // it's optional
   uint256 public constant CERATION_LIMIT_GEN0 = 10; // max num of cats to be generated
+  uint256 public gen0Counter;
+ 
+
   string private _name;
   string private _symbol;
 
-  uint256 public gen0Counter;
-
-  function createKittyGen0(uint256 _genes) public onlyOwner returns(uint256){
-    require(gen0Counter < CERATION_LIMIT_GEN0);
-
-    gen0Counter++;
-
-    // mum, dad and generation is 0
-    // Gen0 have no owners; they are owned by the contract
-   return  _createKitty(0,0,0, _genes, msg.sender); // msg.sender could also be -- address(this) - we are giving cats to owner
-
-  }
-
-struct Kitty{
-  uint256 genes;
+  struct Kitty{
   uint64 birthTime;
   uint32 mumId;
   uint32 dadId;
   uint16 generation;
+  uint256 genes;
 }
 
 Kitty[] kitties;
 
-constructor(string memory name_, string memory symbol_) {
-  _name = name_;
-  _symbol = symbol_;
+  constructor(string memory name_, string memory symbol_) {
+    _name = name_;
+    _symbol = symbol_;
+    owner = msg.sender;
 }
+
 
   function name() external view override returns (string memory tokenName) {
     return _name;
   }
- 
-   
+
   function symbol() external view override returns (string memory tokenSymbol) {
     return _symbol;
   }
+
   // could be external but externals can only be called from outside not within this contract
   function totalSupply() public view override returns (uint256 total) {
     return kitties.length;
@@ -70,38 +63,87 @@ constructor(string memory name_, string memory symbol_) {
     return  ownerToCats[owner];
   }
 
-   function balanceOf(address owner) external view override returns (uint256 balance ) {
+
+  function balanceOf(address owner) external view override returns (uint256 balance ) {
     return ownershipTokenCount[owner];
   }
 
-  function ownerOf(uint256 _tokenId) external view override returns (address) {
-    address _owner = kittyIndexToOwner[_tokenId];
+  function ownerOf(uint256 tokenId) external view override returns (address owner) {
+    address _owner = kittyIndexToOwner[tokenId];
     require(_owner != address(0), "ERC721: owner query for nonexistent token");
 
     return _owner;
   }
-/*
-  function approve(address to, uint256 _tokenId) public virtual {
-    address _owner = kittyIndexToOwner[_tokenId];
+  
+
+  function getKitty(uint256 tokenId) external view returns(uint256, uint256, uint256, uint256, uint256) {
+    Kitty storage returnKitty = kitties[tokenId]; // storage is a pointer, instead of using memory - - we do not make a local copy of it
+    return (returnKitty.birthTime,  returnKitty.mumId, returnKitty.dadId, returnKitty.generation, returnKitty.genes);
+  }
+
+   function getKittyFilip(uint256 _id) public view returns(
+     uint256 birthTime, 
+     uint256 mumId, 
+     uint256 dadId, 
+     uint256 generation, 
+     uint256 genes) {
+
+    Kitty storage kitty = kitties[_id];
+
+    birthTime = uint256(kitty.birthTime);
+    mumId = uint256(mumId);
+    dadId = uint256(dadId);
+    generation = uint256(kitty.generation);
+    genes = kitty.genes;
+  }
+
+  /*
+
+  function approve(address to, uint256 tokenId) public virtual {
+    address _owner = kittyIndexToOwner[tokenId];
     require(to != _owner);
     require(msg.sender == _owner);
 
-    _approve(to, _tokenId);
+    _approve(to, tokenId);
 
   }
   */
 
+   // available function to outside calls - it only sends from msg.sender to recipients
+  function transfer(address to, uint256 tokenId) external override {
+    require(to != address(this), "to cannot be the contract address" );
+    require(to != address(0),"to cannot be the zero address" );
+    require(_owns(msg.sender, tokenId));
+
+    _transfer(address(0), to, tokenId);
+    
+    // might need to input _from instead of msg.sender to transfer from 0 address
+    emit Transfer(address(0), to, tokenId);
+     
+  }
+
+  function createKittyGen0(uint256 _genes) public onlyOwner returns(uint256){
+    require(gen0Counter < CERATION_LIMIT_GEN0, "Gen 0 should be less than creation limit gen 0");
+
+    gen0Counter++;
+
+    // mum, dad and generation is 0
+    // Gen0 have no owners; they are owned by the contract
+   return  _createKitty(0,0,0, _genes, msg.sender); // msg.sender could also be -- address(this) - we are giving cats to owner
+
+  }
+
   // create cats by generation and by breeding
   // retuns cat id
   function _createKitty(
-    uint256 _genes,
     uint256 _mumId,
     uint256 _dadId,
     uint256 _generation, //1,2,3..etc
-    address _owner // recipient
+    uint256 _genes, // recipient
+    address owner
   ) private returns(uint256) {
     Kitty memory newKitties = Kitty({ // create struct object
-      genes: (_genes),
+      genes: _genes,
       birthTime: uint64(block.timestamp),
       mumId: uint32(_mumId),
       dadId: uint32(_dadId),
@@ -112,62 +154,46 @@ constructor(string memory name_, string memory symbol_) {
 
      uint256 newKittenId = kitties.length -1; // 0 -1
 
-     emit Birth(_owner, newKittenId, _mumId, _dadId, _genes);
+     emit Birth(owner, newKittenId, _mumId, _dadId, _genes);
 
-     _transfer(address(0), _owner, newKittenId); // birth of a cat from 0 (standard)
+     _transfer(address(0), owner, newKittenId); // birth of a cat from 0 (standard)
 
     return newKittenId; //returns 256 bit integer
 
-
   }
-  
-    // available function to outside calls - it only sends from msg.sender to recipients
-    function transfer(address _to, uint256 _tokenId) external override {
-    require(address(_to) != address(this), "to cannot be the contract address" );
-    require(address(_to) != address(0),"to cannot be the zero address" );
-    require(_owns(msg.sender, _tokenId));
 
-    _transfer(address(0), _to, _tokenId);
-    // 
-    emit Transfer(address(0), _to, _tokenId);
-     
-  }
+
+ 
 
   // must transfer from address 0
-  function _transfer(address _from,  address _to, uint256 _tokenId) internal {
-    require(address(_to) != address(this), "to cannot be the contract address" );
-    require(address(_to) != address(0),"to cannot be the zero address" );
-    require(kittyIndexToOwner[_tokenId] == msg.sender);
+  function _transfer(address from,  address to, uint256 tokenId) internal {
+    //_approve(address(0), tokenId);
 
-    //_approve(address(0), _tokenId);
+    ownershipTokenCount[to] = ownershipTokenCount[to].add(1);
 
-    ownershipTokenCount[_to] = ownershipTokenCount[_to].add(1);
-
-    kittyIndexToOwner[_tokenId] = _to;
-    ownerToCats[_to].push(_tokenId);
+    kittyIndexToOwner[tokenId] = to;
+    ownerToCats[to].push(tokenId);
    
     // decrease token count from person A to person B
-    if (_from != address(0)) {
-      ownershipTokenCount[_from] = ownershipTokenCount[_to].sub(1);
-        _removeTokenIdFromOwner(_from, _tokenId);
+    if (from != address(0)) {
+      ownershipTokenCount[from] = ownershipTokenCount[from].sub(1);
+        _removeTokenIdFromOwner(from, tokenId);
     }
-
-    // might need to input _from instead of msg.sender to transfer from 0 address
-    emit Transfer(_from, _to, _tokenId);
      
   }
 
-    function _removeTokenIdFromOwner(address _owner, uint256 _tokenId) internal {
-      uint256 lastId = ownerToCats[_owner][ownerToCats[_owner].length -1];
-      for (uint256 i = 0; i < ownerToCats[_owner].length -1; i++) {
-        if (ownerToCats[_owner][i] == _tokenId) {
-            ownerToCats[_owner][i] = lastId;
-            ownerToCats[_owner].pop();
+    function _removeTokenIdFromOwner(address owner, uint256 tokenId) internal {
+      uint256 lastId = ownerToCats[owner][ownerToCats[owner].length -1];
+      for (uint256 i = 0; i < ownerToCats[owner].length; i++) {
+        if (ownerToCats[owner][i] == tokenId) {
+            ownerToCats[owner][i] = lastId;
+            ownerToCats[owner].pop();
         }
 
       }
 
   }
+
 /*
   function _approve(address to, uint256 _tokenId) internal virtual {
     address _owner = kittyIndexToOwner[_tokenId];
@@ -176,11 +202,9 @@ constructor(string memory name_, string memory symbol_) {
 
   }
   */
-
-  function _owns(address _claimant, uint256 _tokenId) internal view returns(bool) {
-    return kittyIndexToOwner[_tokenId] == _claimant;
+  
+  function _owns(address _claimant, uint256 tokenId) internal view returns(bool) {
+    return kittyIndexToOwner[tokenId] == _claimant;
   }
-
-
 
 }
