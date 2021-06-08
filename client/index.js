@@ -1,14 +1,3 @@
-alert("Hello");
-
-
-
-
-
-
-
-
-//-------------------------------
-
 // 1 Basic Action(Part 1)
 
 const forwarderOrigin = 'http://localhost:7545';
