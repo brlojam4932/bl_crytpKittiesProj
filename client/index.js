@@ -43,21 +43,17 @@ const initialize = () => {
   };
   */
 
-  var instance;
-  var user;
-  var contractAddress = 0x51d9aD5C5EB7FDBB444D78ADE2a194f87dcEf735;;
-
+  // I just managed to get the abi with this code =================
   $(document).ready(async () => {
-   
-    const accounts = await ethereum.request({from: accounts[0], abi, contractAddress, method: 'eth_requestAccounts' })
-    // Accounts now exposed, use them
-
-      user = accounts[0];
+    const accounts = await ethereum.request({ method: 'eth_accounts' });
+    const instance = ethereum.request({method: 'eth_requestAccounts', params: [accounts[0]] }, window.abi, 0x51d9aD5C5EB7FDBB444D78ADE2a194f87dcEf735);
 
       console.log(instance);
 
       instance.methods
-  }) 
+  });
+  //================================================================
+  
 
 
   const onClickConnect = async () => {
