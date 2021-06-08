@@ -1,4 +1,4 @@
-var abi = [
+window.abi = [
   {
     "inputs": [
       {
